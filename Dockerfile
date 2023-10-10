@@ -65,6 +65,22 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
+# add coral repo
+curl -fsSLo - https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+    gpg --dearmor -o /etc/apt/trusted.gpg.d/google-cloud-packages-archive-keyring.gpg
+echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list
+echo "libedgetpu1-max libedgetpu/accepted-eula select true" | debconf-set-selections
+
+# enable non-free repo in Debian
+if grep -q "Debian" /etc/issue; then
+    sed -i -e's/ main/ main contrib non-free/g' /etc/apt/sources.list
+fi
+
+# coral drivers
+apt-get -qq update
+apt-get -qq install --no-install-recommends --no-install-suggests -y \
+    libedgetpu1-max python3-tflite-runtime python3-pycoral
+
 # Run in the /data directory by default, makes for
 # a good place for the user to mount local volume
 WORKDIR /data
